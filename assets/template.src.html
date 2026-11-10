@@ -1,0 +1,673 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{TITULO}} · Octodone</title>
+<!--
+  FONTE DE EDIÇÃO. Não publique este arquivo: rode scripts/build.ps1 para gerar o .html final autocontido.
+  O marcador abaixo é trocado pelo build por: fonte Inter (base64), Chart.js 4.4.1 e SheetJS 0.18.5 embutidos
+  (o gateway dos embedded tools pode bloquear CDNs, então nada é carregado de fora).
+-->
+<!-- @@VENDOR@@ -->
+<style>
+/* Tokens: substituir pelos de references/octodone-styleguide.md (extraídos do repo) quando houver diferença. */
+:root{
+  /* Octodone */
+  --app-page-background:#323233;
+  --bg:#323233;
+  --topbar:#29292A;
+  --card:#3A3A3C;
+  --card-2:#424245;
+  --field:#2C2C2D;
+  --line:#4A4A4E;
+  --line-soft:#404043;
+  --ink:#F2F2F3;
+  --ink-2:#C9C9CE;
+  --muted:#9C9CA3;
+  --faint:#76767D;
+  --primary:#00BCF2;
+  --primary-hover:#1FC8F8;
+  --primary-ink:#FFFFFF;
+  --brand-blue:#427DFD;
+  --row-hover:#434347;
+  --danger:#E5484D;
+  --radius:10px;
+  --radius-sm:7px;
+  --shadow:0 8px 28px rgba(0,0,0,.28);
+  --font:'Inter',system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  /* séries (paleta categórica validada p/ superfície escura) */
+  --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--s7:#9085e9;--s8:#e66767;--s-other:#6B6B72;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 var(--font);-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:#55555a;border-radius:8px;border:2px solid transparent;background-clip:content-box}::-webkit-scrollbar-track{background:transparent}
+
+/* ---------- Topbar ---------- */
+.topbar{position:sticky;top:0;z-index:40;background:var(--topbar);border-bottom:1px solid var(--line-soft);display:flex;align-items:center;gap:24px;padding:0 24px;height:60px}
+.brand{display:flex;align-items:center;gap:10px;flex:0 0 auto}
+.brand svg{width:30px;height:30px}
+.brand .t1{font-weight:700;font-size:15px;letter-spacing:-.01em}
+.brand .t2{font-size:11px;color:var(--muted);margin-top:-2px}
+.tabs{display:flex;align-items:stretch;gap:4px;height:100%;overflow-x:auto;flex:1 1 auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{background:none;border:0;cursor:pointer;padding:0 14px;color:var(--muted);font-weight:600;font-size:13.5px;position:relative;white-space:nowrap}
+.tab:hover{color:var(--ink)}
+.tab.active{color:var(--ink)}
+.tab.active::after{content:"";position:absolute;left:10px;right:10px;bottom:0;height:3px;border-radius:3px 3px 0 0;background:var(--primary)}
+.actions{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+.btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 13px;border-radius:var(--radius-sm);cursor:pointer;font-weight:600;font-size:13px;white-space:nowrap}
+.btn:hover{background:var(--card-2)}
+.btn.primary{background:var(--primary);border-color:var(--primary);color:var(--primary-ink)}
+.btn.primary:hover{background:var(--primary-hover)}
+.btn svg{width:15px;height:15px}
+
+/* ---------- Layout ---------- */
+.page{width:100%;padding:22px 24px 48px}
+.view{display:none}.view.active{display:block}
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+.head h1{margin:0;font-size:22px;font-weight:700;letter-spacing:-.02em}
+.head p{margin:3px 0 0;color:var(--muted);font-size:13px}
+.stamp{color:var(--faint);font-size:12px}
+
+.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;background:var(--card);border:1px solid var(--line-soft);border-radius:var(--radius);padding:14px;margin-bottom:16px}
+.f-label{display:block;font-size:12px;font-weight:600;color:var(--ink-2);margin-bottom:6px}
+.period{display:flex;gap:8px;align-items:center;min-width:0}
+.period input{min-width:0;flex:1 1 0}
+.filters>*{min-width:0}
+.period span{color:var(--faint);font-size:12px}
+.f-period{grid-column:span 2}
+@media (max-width:700px){.f-period{grid-column:auto}.period{flex-direction:column;align-items:stretch}}
+.date{width:100%;background:var(--field);border:1px solid var(--line);border-radius:var(--radius-sm);padding:8px 10px;height:38px;color-scheme:dark}
+.date:focus{outline:none;border-color:var(--primary)}
+
+/* multiselect */
+.ms{position:relative}
+.ms-btn{width:100%;height:38px;display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--field);border:1px solid var(--line);border-radius:var(--radius-sm);padding:0 10px;cursor:pointer;text-align:left}
+.ms-btn:hover,.ms.open .ms-btn{border-color:var(--primary)}
+.ms-btn .v{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ms-btn .v.ph{color:var(--muted)}
+.ms-btn .cnt{background:var(--primary);color:#fff;border-radius:20px;font-size:11px;font-weight:700;padding:1px 7px}
+.ms-btn svg{flex:0 0 auto;width:14px;height:14px;color:var(--muted)}
+.ms-pop{display:none;position:absolute;z-index:60;top:calc(100% + 6px);left:0;min-width:100%;width:max(100%,340px);max-width:min(460px,92vw);background:var(--card-2);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.ms.open .ms-pop{display:block}
+.ms-pop.right{left:auto;right:0}
+.ms-search{padding:10px;border-bottom:1px solid var(--line)}
+.ms-search input{width:100%;background:var(--field);border:1px solid var(--line);border-radius:var(--radius-sm);padding:8px 10px}
+.ms-search input:focus{outline:none;border-color:var(--primary)}
+.ms-tools{display:flex;justify-content:space-between;align-items:center;padding:7px 12px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--line)}
+.ms-tools button{background:none;border:0;color:var(--primary);cursor:pointer;font-weight:600;font-size:12px;padding:2px 4px}
+.ms-list{max-height:300px;overflow:auto;padding:4px 0}
+.ms-opt{display:flex;align-items:center;gap:9px;padding:7px 12px;cursor:pointer;user-select:none}
+.ms-opt:hover{background:var(--row-hover)}
+.ms-opt input{accent-color:var(--primary);width:15px;height:15px;flex:0 0 auto;margin:0}
+.ms-opt .lb{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ms-opt .lb small{display:block;color:var(--faint);font-size:11px;overflow:hidden;text-overflow:ellipsis}
+.ms-opt .hr{flex:0 0 auto;font-variant-numeric:tabular-nums;color:var(--muted);font-size:12px}
+.ms-empty{padding:14px;color:var(--muted);text-align:center}
+
+/* KPI card */
+.kpi{background:var(--card);border:1px solid var(--line-soft);border-radius:var(--radius);padding:18px 20px;margin-bottom:16px;display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap}
+.kpi .lbl{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.kpi .val{font-size:40px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.1;margin-top:4px}
+.kpi .meta{display:flex;gap:22px;flex-wrap:wrap;color:var(--muted);font-size:13px;padding-bottom:6px}
+.kpi .meta b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+
+/* panels */
+.panel{background:var(--card);border:1px solid var(--line-soft);border-radius:var(--radius);margin-bottom:16px;overflow:hidden}
+.panel-h{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line-soft);flex-wrap:wrap}
+.panel-h h2{margin:0;font-size:15px;font-weight:600}
+.panel-h .sub{color:var(--muted);font-size:12px}
+.panel-b{padding:16px 18px}
+
+/* table */
+.tbl-wrap{overflow:auto;max-height:620px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{position:sticky;top:0;background:var(--card-2);text-align:left;font-weight:600;color:var(--ink-2);padding:10px 14px;border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;user-select:none}
+thead th:hover{color:var(--ink)}
+thead th .ar{display:inline-block;width:12px;margin-left:4px;color:var(--primary);font-size:11px}
+th.num,td.num{text-align:right}
+tbody td{padding:9px 14px;border-bottom:1px solid var(--line-soft);white-space:nowrap;font-variant-numeric:tabular-nums}
+tbody tr:hover td{background:var(--row-hover)}
+td.muted{color:var(--muted)}
+td .wd{display:inline-block;min-width:28px;margin-left:6px;color:var(--muted);font-size:12px}
+td .wd.off{color:#f07070;font-weight:600}
+td .uname{margin-left:6px;color:var(--muted);font-size:12px}
+.pill{display:inline-block;padding:1px 8px;border-radius:20px;font-size:11.5px;font-weight:600;background:#4a4a4f;color:var(--ink-2)}
+.pill.yes{background:rgba(230,103,103,.18);color:#f08a8a}
+.pager{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 18px;border-top:1px solid var(--line-soft);color:var(--muted);font-size:12.5px;flex-wrap:wrap}
+.pager .ctl{display:flex;align-items:center;gap:6px}
+.pager button{background:var(--field);border:1px solid var(--line);border-radius:6px;padding:4px 10px;cursor:pointer}
+.pager button:disabled{opacity:.4;cursor:default}
+.pager select{background:var(--field);border:1px solid var(--line);border-radius:6px;padding:4px 6px}
+.empty{padding:40px;text-align:center;color:var(--muted)}
+
+/* charts */
+.chart-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+.scroll-chart{max-height:720px;overflow-y:auto;overflow-x:hidden}
+.combo-legend{display:flex;gap:18px;color:var(--ink-2);font-size:12.5px}
+.combo-legend span{display:inline-flex;align-items:center;gap:7px}
+.combo-legend i{display:inline-block;width:12px;height:12px;border-radius:3px}
+.combo-legend i.line{height:2px;width:18px;border-radius:2px}
+
+/* live loading */
+.btn:disabled{opacity:.55;cursor:default}
+.btn.spin svg{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loadbar{position:sticky;top:0;z-index:60;height:3px;background:transparent;overflow:hidden;display:none}
+.loadbar.on{display:block}
+.loadbar i{display:block;height:100%;width:0;background:var(--primary);transition:width .25s}
+.loadmsg{display:none;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line-soft);border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;color:var(--muted);font-size:13px}
+.loadmsg.on{display:flex}
+.loadmsg.err{border-color:var(--danger);color:#F2F2F3}
+.loadmsg .dot{width:14px;height:14px;border:2px solid #ffffff30;border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite;flex:0 0 auto}
+.loadmsg.err .dot{display:none}
+.page.busy .view{opacity:.6;transition:opacity .2s}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--card-2);border:1px solid var(--line);padding:10px 16px;border-radius:8px;box-shadow:var(--shadow);display:none;z-index:99}
+
+@media (max-width:900px){
+  .topbar{height:auto;flex-wrap:wrap;padding:10px 16px;gap:8px}
+  .tabs{order:3;width:100%;flex-basis:100%;height:42px}
+  .page{padding:16px}
+  .kpi .val{font-size:32px}
+  .btn .tx{display:none}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2.5 27.5 9v11.2L16 26.7 4.5 20.2V9z" fill="none" stroke="#427DFD" stroke-width="3.2" stroke-linejoin="round"/><path d="M16 10.2 21 13v5.6l-5 2.9-5-2.9V13z" fill="#427DFD" opacity=".35"/><path d="M10.5 27.2 16 30l5.5-2.8" fill="none" stroke="#00BCF2" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div><div class="t1">{{TITULO}}</div><div class="t2">Octodone · Insights</div></div>
+  </div>
+  <nav class="tabs" role="tablist">
+    <!-- uma aba por visão; data-view = id da <section id="view-..."> -->
+    <button class="tab active" data-view="geral" role="tab">Visão geral</button>
+  </nav>
+  <div class="actions">
+    <button class="btn" id="reload" title="Buscar de novo os dados no Octodone" aria-label="Atualizar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36L21 8M21 3v5h-5"/></svg><span class="tx">Atualizar</span></button>
+    <button class="btn" id="exp-xlsx" title="Exportar a visão atual em planilha (.xlsx)" aria-label="Exportar planilha"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg><span class="tx">Planilha</span></button>
+    <button class="btn primary" id="exp-csv" title="Exportar a visão atual em CSV" aria-label="Exportar CSV"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span class="tx">CSV</span></button>
+  </div>
+</header>
+<div class="loadbar" id="loadbar"><i></i></div>
+
+<main class="page">
+  <div class="loadmsg" id="loadmsg" role="status"><span class="dot"></span><span class="tx"></span></div>
+
+  <section class="view active" id="view-geral">
+    <div class="head"><div><h1>Visão geral</h1><p>{{DESCRICAO DA VISAO}}</p></div><div class="stamp" data-stamp></div></div>
+    <div class="filters" data-filters></div>
+    <div class="kpi" data-kpi></div>
+    <div class="panel"><div class="panel-h"><h2>Registros</h2><span class="sub" data-count></span></div><div data-table></div></div>
+    <div class="panel"><div class="panel-h"><h2>Total por categoria</h2><span class="sub" data-barsub></span></div><div class="panel-b scroll-chart"><div data-barbox style="position:relative"><canvas data-bar></canvas></div></div></div>
+  </section>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+'use strict';
+/* ================================================================
+   1. CONFIGURAÇÃO
+   ================================================================ */
+const DASHBOARD_NAME = '{{TITULO}}';      // usado no nome dos arquivos exportados
+const TAB_KEY = 'octo-{{slug}}-tab';      // chave do localStorage (aba ativa)
+// 'dev'      → Fase 1: usa DEV_DATA (amostra real obtida pelo MCP), sem chamar o gateway.
+// 'live'     → Fase 2 (padrão): consulta o gateway /__octodone/* com a sessão de quem abriu.
+// 'snapshot' → Fase 2 alternativa: outra rotina injeta os dados em SNAPSHOT periodicamente.
+const DATA_MODE = 'dev';
+// Datas agrupadas no fuso de Brasília. Só troque se o usuário pedir explicitamente.
+const TZ = 'America/Sao_Paulo';
+const MIN_DAY = null;                     // TODO: confirmar data mínima do filtro de período (null = sem limite)
+
+const API_URL = '/__octodone/graphql', SESSION_URL = '/__octodone/session';
+const BRIDGE_HEADERS = { 'X-Octodone-Embed': '1' };
+const PER_PAGE = 5000, PAGE_POOL = 3, META_BATCH = 250, META_POOL = 2;
+
+/* ================================================================
+   2. DADOS DE DESENVOLVIMENTO (Fase 1)
+   Amostra REAL obtida pelo MCP (run_graphql_query), no MESMO formato dos
+   items da API — assim a troca para 'live' muda só a origem, não o código.
+   Na Fase 2 esvazie: items: [], lookups: {} (o build recusa 'live' com amostra).
+   ================================================================ */
+const DEV_DATA = {
+  generatedAt: '2026-01-01T00:00:00-03:00', // TODO: momento em que a amostra foi tirada
+  items: [ /* { id: 1, startDate: '2026-11-03T13:10:00+00:00', value: 1.5, category: { name: 'A' }, deletedAt: null }, ... */ ],
+  lookups: { /* ex.: users: [{ id, fullname, email }] */ },
+};
+
+/* ================================================================
+   3. SNAPSHOT (só DATA_MODE = 'snapshot')
+   A rotina externa troca o comentário-marcador abaixo por
+   { generatedAt: ISO, items: [...], lookups: {...} } — mesmo formato de DEV_DATA.
+   ================================================================ */
+const SNAPSHOT = /*@@SNAPSHOT@@*/null;
+
+/* ================================================================
+   4. ESPECÍFICO DO DASHBOARD: queries, normalização, regras de negócio
+   Descubra entidades/argumentos/campos com o MCP (get_graphql_schema).
+   Exemplo completo e real: assets/reference-timetracker.js da skill.
+   ================================================================ */
+// Uma página da entidade principal no período [a, b] (já com folga de 1 dia em cada ponta).
+const ENTITY = 'Entidade';                                    // TODO: entidade real (ex.: TaskWorkSession)
+const FIELDS = 'id startDate deletedAt value category { name }'; // TODO: campos reais
+const pageQuery = (page, a, b) => `query { ${ENTITY} { all(perPage: ${PER_PAGE}, page: ${page}, startDate: "${a}T00:00:00", endDate: "${b}T23:59:59") { totalCount items { ${FIELDS} } } } }`;
+const pageOf = data => data[ENTITY].all;
+
+// Tabelas auxiliares (pessoas, deliverables...) — id -> objeto, ou null quando a API não devolve (sem permissão).
+const LOOKUPS = { /* users: new Map() */ };
+// live: busca em lotes só os ids que ainda não conhecemos.
+async function fetchLookups() {
+  /* const ids = [...new Set([...RAW.values()].map(r => r.userId))].filter(id => id && !LOOKUPS.users.has(id));
+     await pool(chunks(ids, META_BATCH), META_POOL, async batch => {
+       const d = await gql(`query { User { all(companyId: ${COMPANY_ID}, perPage: ${META_BATCH}, userIds: [${batch}]) { items { id fullname email } } } }`);
+       for (const u of d.User.all.items) LOOKUPS.users.set(u.id, u);
+       batch.forEach(id => { if (!LOOKUPS.users.has(id)) LOOKUPS.users.set(id, null); });
+     }); */
+}
+// dev/snapshot: preenche LOOKUPS a partir do bloco lookups (mesmo formato da API).
+function applyLookups(lk) { /* (lk.users || []).forEach(u => LOOKUPS.users.set(u.id, u)); */ }
+
+// Item da API -> registro usado pelas visões (ou null para descartar). Regras de negócio ficam AQUI, comentadas.
+function normalize(it) {
+  if (it.deletedAt) return null;                                // registros deletados ficam de fora
+  const ts = Math.floor(Date.parse(String(it.startDate).replace(/\.\d+/, '')) / 1000);
+  return {
+    id: it.id, ts, day: dayKeyOf(ts),
+    value: Number(it.value) || 0,                               // TODO: métrica real
+    cat: (it.category && it.category.name) || 'Sem categoria',  // TODO: dimensão real
+  };
+}
+
+// Dimensões filtráveis: key(registro) -> chave; opt(chave) -> rótulo exibido.
+const DIMS = {
+  cat: { label: 'Categoria', key: r => r.cat, opt: k => ({ label: k }) },
+};
+const METRIC = { label: 'Total', fmt: v => nf2.format(v), of: r => r.value }; // métrica somada nos filtros/KPI
+
+/* ================================================================
+   5. INFRA (não muda entre dashboards)
+   ================================================================ */
+class ApiError extends Error {}
+let COMPANY_ID = null; // sempre vindo de /__octodone/session
+async function call(url, init) {
+  let r;
+  try { r = await fetch(url, { credentials: 'same-origin', ...init, headers: { ...BRIDGE_HEADERS, ...(init && init.headers) } }); }
+  catch (e) { throw new ApiError('Sem conexão com a API do Octodone.'); }
+  let j = null; try { j = await r.json(); } catch (e) {}
+  if (!r.ok) {
+    const why = j && j.detail ? ' (' + j.detail + ')' : '';
+    if (r.status === 401 || r.status === 403) throw new ApiError('A sessão do Octodone expirou ou não tem acesso' + why + '. Reabra esta ferramenta pelo menu do Octodone.');
+    throw new ApiError('A API do Octodone respondeu com erro ' + r.status + why + '.');
+  }
+  return j;
+}
+async function gql(query) {
+  const j = await call(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query }) });
+  if (!j || (j.errors && j.errors.length)) throw new ApiError('Erro na consulta à API do Octodone' + (j && j.errors ? ': ' + j.errors.map(e => e.message).join('; ') : '.'));
+  return j.data;
+}
+let sessionReady = null;
+const session = () => sessionReady || (sessionReady = call(SESSION_URL).then(s => {
+  if (!s || !s.company_id) throw new ApiError('A sessão do Octodone não informou a empresa. Reabra esta ferramenta pelo menu do Octodone.');
+  COMPANY_ID = s.company_id; return s;
+}).catch(e => { sessionReady = null; throw e; }));
+async function pool(items, n, fn) { const q = items.slice(); await Promise.all(Array.from({ length: Math.min(n, q.length) }, async () => { while (q.length) await fn(q.shift()); })); }
+const chunks = (a, n) => { const out = []; for (let i = 0; i < a.length; i += n) out.push(a.slice(i, i + n)); return out; };
+
+/* datas: chaves 'AAAA-MM-DD' no fuso TZ */
+const dayFmt = new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' });
+const dayByHour = new Map(); // o fuso de Brasília tem offset em horas cheias: cache por hora basta
+const dayKeyOf = ts => { const h = Math.floor(ts / 3600); let d = dayByHour.get(h); if (!d) { d = dayFmt.format(new Date(h * 3600000)); dayByHour.set(h, d); } return d; };
+const today = () => dayFmt.format(new Date());
+const dayAdd = (day, n) => { const d = new Date(day + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+let MAX_DAY = today();
+
+/* store */
+const RAW = new Map(); // id -> item da API
+let S = [];            // registros normalizados
+const addRaw = it => { if (it.deletedAt) RAW.delete(it.id); else RAW.set(it.id, it); };
+function rebuild() { S = []; for (const it of RAW.values()) { const r = normalize(it); if (r) S.push(r); } }
+
+async function fetchRange(from, to, progress) {
+  const a = dayAdd(from, -1), b = dayAdd(to, 1); // folga: não depender do fuso que a API usa no filtro
+  const first = pageOf(await gql(pageQuery(1, a, b)));
+  const pages = Math.max(1, Math.ceil(first.totalCount / PER_PAGE));
+  let done = 1; first.items.forEach(addRaw); progress(done, pages);
+  await pool(Array.from({ length: pages - 1 }, (_, i) => i + 2), PAGE_POOL, async p => { pageOf(await gql(pageQuery(p, a, b))).items.forEach(addRaw); progress(++done, pages); });
+}
+
+const SOURCES = {
+  dev: { incremental: false, stamp: () => 'Dados de desenvolvimento (amostra fixa de ' + dateTime(DEV_DATA.generatedAt) + ')',
+    async load() { DEV_DATA.items.forEach(addRaw); applyLookups(DEV_DATA.lookups || {}); } },
+  snapshot: { incremental: false, stamp: () => 'Dados de ' + dateTime(SNAPSHOT.generatedAt),
+    async load() { if (!SNAPSHOT) throw new ApiError('Os dados deste painel ainda não foram gerados pela rotina de atualização.'); SNAPSHOT.items.forEach(addRaw); applyLookups(SNAPSHOT.lookups || {}); } },
+  live: { incremental: true, stamp: () => 'Dados ao vivo do Octodone · atualizados às ' + loadedAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: TZ }),
+    async load(from, to, progress) { await session(); await fetchRange(from, to, progress); progress(null); await fetchLookups(); } },
+};
+const SRC = SOURCES[DATA_MODE];
+
+/* carregamento sob demanda: em 'live' só busca os dias que faltam; as cargas ficam em fila (chain) */
+let loadedFrom = null, loadedTo = null, loadedAt = null, chain = Promise.resolve();
+const loadbar = document.getElementById('loadbar'), loadmsg = document.getElementById('loadmsg'), pageEl = document.querySelector('.page');
+function busy(on, text, frac) {
+  loadbar.classList.toggle('on', on); pageEl.classList.toggle('busy', on);
+  loadbar.firstElementChild.style.width = on ? Math.round((frac || 0.05) * 100) + '%' : '0';
+  loadmsg.classList.toggle('on', on); loadmsg.classList.remove('err');
+  if (on) loadmsg.querySelector('.tx').textContent = text;
+  const rb = document.getElementById('reload'); rb.disabled = on; rb.classList.toggle('spin', on);
+}
+function fail(err) {
+  busy(false); loadmsg.classList.add('on', 'err');
+  loadmsg.querySelector('.tx').textContent = err instanceof ApiError ? err.message : 'Não foi possível carregar os dados: ' + err.message;
+}
+function ensure(from, to) {
+  chain = chain.then(async () => {
+    const need = [];
+    if (loadedFrom === null) need.push([from, to]);
+    else if (SRC.incremental) { if (from < loadedFrom) need.push([from, dayAdd(loadedFrom, -1)]); if (to > loadedTo) need.push([dayAdd(loadedTo, 1), to]); }
+    if (!need.length) return false;
+    const label = SRC.incremental ? need.map(([a, b]) => longDate(a) + ' a ' + longDate(b)).join(' e ') : 'do painel';
+    busy(true, 'Carregando dados ' + (SRC.incremental ? 'de ' : '') + label + '…', 0.05);
+    for (const [a, b] of need) await SRC.load(a, b, (d, n) => d == null ? busy(true, 'Carregando dados relacionados…', 0.9) : busy(true, `Carregando dados de ${label}… (${d}/${n})`, 0.05 + 0.8 * d / n));
+    loadedFrom = loadedFrom === null || from < loadedFrom ? from : loadedFrom;
+    loadedTo = loadedTo === null || to > loadedTo ? to : loadedTo;
+    loadedAt = new Date();
+    rebuild(); busy(false); return true;
+  }).catch(err => { fail(err); return false; });
+  return chain;
+}
+
+/* formatadores (Intl em cache) */
+const pad = n => String(n).padStart(2, '0');
+const hms = sec => { sec = Math.round(sec || 0); const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60; return pad(h) + ':' + pad(m) + ':' + pad(s); };
+const nf = new Intl.NumberFormat('pt-BR');
+const nf1 = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 });
+const nf2 = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+const longFmt = new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+const longCache = new Map();
+const longDate = day => { let v = longCache.get(day); if (!v) { v = longFmt.format(new Date(day + 'T12:00:00Z')); longCache.set(day, v); } return v; };
+const shortDate = day => day.slice(8, 10) + '/' + day.slice(5, 7) + '/' + day.slice(0, 4);
+const dateTime = iso => { const d = new Date(iso); return isNaN(d) ? '—' : d.toLocaleString('pt-BR', { timeZone: TZ, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }); };
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+// Feriados nacionais (Lei 662/49, 6.802/80, 14.759/23) + Sexta-feira Santa, calculada pela Páscoa.
+const FIXED_HOLIDAYS = { '01-01': 'Confraternização Universal', '04-21': 'Tiradentes', '05-01': 'Dia do Trabalho', '09-07': 'Independência', '10-12': 'Nossa Senhora Aparecida', '11-02': 'Finados', '11-15': 'Proclamação da República', '11-20': 'Consciência Negra', '12-25': 'Natal' };
+const holidayCache = new Map();
+function holidaysOf(y) {
+  let h = holidayCache.get(y); if (h) return h;
+  h = new Map(Object.entries(FIXED_HOLIDAYS).filter(([md]) => md !== '11-20' || y >= 2024).map(([md, n]) => [y + '-' + md, n]));
+  const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3);
+  const hh = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - hh - k) % 7, m = Math.floor((a + 11 * hh + 22 * l) / 451);
+  const easter = Date.UTC(y, Math.floor((hh + l - 7 * m + 114) / 31) - 1, (hh + l - 7 * m + 114) % 31 + 1);
+  h.set(new Date(easter - 2 * 864e5).toISOString().slice(0, 10), 'Sexta-feira Santa');
+  holidayCache.set(y, h); return h;
+}
+const WEEKDAYS = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+const weekday = day => new Date(day + 'T12:00:00Z').getUTCDay();
+const wdLabel = day => WEEKDAYS[weekday(day)] + (holidaysOf(+day.slice(0, 4)).has(day) ? ' (feriado)' : '');
+// data + dia da semana; fim de semana e feriado nacional em vermelho
+const dayCell = (day, label = longDate(day)) => {
+  const wd = weekday(day), hol = holidaysOf(+day.slice(0, 4)).get(day), off = hol || wd === 0 || wd === 6;
+  return `${esc(label)} <span class="wd${off ? ' off' : ''}"${hol ? ` title="Feriado: ${esc(hol)}"` : ''}>${WEEKDAYS[wd]}${hol ? ' · feriado' : ''}</span>`;
+};
+const stamp = () => document.querySelectorAll('[data-stamp]').forEach(e => e.textContent = loadedAt ? SRC.stamp() : 'Carregando dados…');
+stamp();
+
+/* ---------- MultiSelect ---------- */
+const CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>';
+let openMs = null;
+document.addEventListener('mousedown', e => { if (openMs && !openMs.el.contains(e.target)) openMs.close(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && openMs) openMs.close(); });
+class MultiSelect {
+  constructor(host, { label, dim, showMetric, getMetric, onChange }) {
+    this.sel = new Set(); this.dim = dim; this.showMetric = showMetric; this.getMetric = getMetric; this.onChange = onChange;
+    this.el = document.createElement('div'); this.el.className = 'ms';
+    this.el.innerHTML = `<span class="f-label">${esc(label)}</span><button type="button" class="ms-btn" aria-haspopup="listbox"><span class="v ph">Todos</span>${CHEV}</button>
+      <div class="ms-pop"><div class="ms-search"><input type="search" placeholder="Buscar ${esc(label.toLowerCase())}…" aria-label="Buscar ${esc(label.toLowerCase())}"></div>
+      <div class="ms-tools"><span class="info"></span><span><button type="button" data-a="all">Selecionar visíveis</button><button type="button" data-a="none">Limpar</button></span></div>
+      <div class="ms-list"></div></div>`;
+    host.appendChild(this.el);
+    this.btn = this.el.querySelector('.ms-btn'); this.pop = this.el.querySelector('.ms-pop');
+    this.q = this.el.querySelector('input'); this.list = this.el.querySelector('.ms-list'); this.info = this.el.querySelector('.info');
+    this.btn.addEventListener('click', () => this.el.classList.contains('open') ? this.close() : this.open());
+    this.q.addEventListener('input', () => this.renderList());
+    this.el.querySelector('[data-a=all]').addEventListener('click', () => { this.visible.forEach(o => this.sel.add(o.k)); this.changed(); });
+    this.el.querySelector('[data-a=none]').addEventListener('click', () => { this.sel.clear(); this.changed(); });
+    this.list.addEventListener('change', e => {
+      const cb = e.target.closest('input[type=checkbox]'); if (!cb) return;
+      const k = this.keys[+cb.dataset.i]; cb.checked ? this.sel.add(k) : this.sel.delete(k); this.changed(false);
+    });
+  }
+  open() {
+    if (openMs && openMs !== this) openMs.close();
+    openMs = this; this.el.classList.add('open');
+    const r = this.el.getBoundingClientRect(); this.pop.classList.toggle('right', r.left + 360 > innerWidth);
+    this.q.value = ''; this.renderList(); setTimeout(() => this.q.focus(), 0);
+  }
+  close() { this.el.classList.remove('open'); if (openMs === this) openMs = null; }
+  options() {
+    const metric = this.getMetric(this.dim); // Map chave -> total no período
+    const keys = new Set(metric.keys()); this.sel.forEach(k => keys.add(k));
+    const out = [];
+    keys.forEach(k => { const o = DIMS[this.dim].opt(k); out.push({ k, label: o.label, sub: o.sub || '', val: metric.get(k) || 0 }); });
+    out.sort((a, b) => (this.sel.has(b.k) - this.sel.has(a.k)) || (b.val - a.val) || a.label.localeCompare(b.label, 'pt-BR'));
+    return out;
+  }
+  infoText() { return this.sel.size ? `${this.sel.size} selecionado(s)` : `${this.visible.length} opção(ões)`; }
+  renderList() {
+    const q = this.q.value.trim().toLowerCase();
+    const all = this.options();
+    this.visible = q ? all.filter(o => (o.label + ' ' + o.sub).toLowerCase().includes(q)) : all;
+    this.keys = this.visible.map(o => o.k);
+    this.info.textContent = this.infoText();
+    if (!this.visible.length) { this.list.innerHTML = '<div class="ms-empty">Nenhum resultado</div>'; return; }
+    this.list.innerHTML = this.visible.map((o, i) => `<label class="ms-opt"><input type="checkbox" data-i="${i}" ${this.sel.has(o.k) ? 'checked' : ''}>
+      <span class="lb">${esc(o.label)}${o.sub ? `<small>${esc(o.sub)}</small>` : ''}</span>${this.showMetric ? `<span class="hr">${esc(METRIC.fmt(o.val))}</span>` : ''}</label>`).join('');
+  }
+  updateButton() {
+    const v = this.btn.querySelector('.v'); const old = this.btn.querySelector('.cnt'); if (old) old.remove();
+    if (!this.sel.size) { v.textContent = 'Todos'; v.classList.add('ph'); return; }
+    v.classList.remove('ph');
+    const first = DIMS[this.dim].opt([...this.sel][0]).label;
+    v.textContent = this.sel.size === 1 ? first : first + ' +' + (this.sel.size - 1);
+    const c = document.createElement('span'); c.className = 'cnt'; c.textContent = this.sel.size; v.after(c);
+  }
+  changed(rerender = true) { this.updateButton(); if (rerender) this.renderList(); else this.info.textContent = this.infoText(); this.onChange(); }
+  refresh() { if (this.el.classList.contains('open')) this.renderList(); }
+}
+
+/* ---------- Table: cabeçalho fixo, ordenação pt-BR, paginação ---------- */
+const COLL = new Intl.Collator('pt-BR', { sensitivity: 'base', numeric: true });
+class Table {
+  constructor(host, cols, defaultSort) {
+    this.cols = cols; this.sort = defaultSort; this.page = 0; this.size = 100; this.rows = [];
+    host.innerHTML = `<div class="tbl-wrap"><table><thead><tr></tr></thead><tbody></tbody></table></div>
+      <div class="pager"><span class="info"></span><span class="ctl">Linhas <select aria-label="Linhas por página">${[50, 100, 250, 500].map(n => `<option ${n === 100 ? 'selected' : ''}>${n}</option>`).join('')}</select>
+      <button type="button" data-p="-1">‹ Anterior</button><span class="pg"></span><button type="button" data-p="1">Próxima ›</button></span></div>`;
+    this.wrap = host.querySelector('.tbl-wrap'); this.thr = host.querySelector('thead tr'); this.tb = host.querySelector('tbody');
+    this.info = host.querySelector('.info'); this.pg = host.querySelector('.pg');
+    this.thr.innerHTML = cols.map((c, i) => `<th data-i="${i}" class="${c.num ? 'num' : ''}" title="Ordenar por ${esc(c.label)}">${esc(c.label)}<span class="ar"></span></th>`).join('');
+    this.thr.addEventListener('click', e => {
+      const th = e.target.closest('th'); if (!th) return; const c = this.cols[+th.dataset.i];
+      this.sort = this.sort.key === c.key ? { key: c.key, dir: -this.sort.dir } : { key: c.key, dir: c.num ? -1 : 1 };
+      this.apply(); this.page = 0; this.draw();
+    });
+    host.querySelector('select').addEventListener('change', e => { this.size = +e.target.value; this.page = 0; this.draw(); });
+    host.querySelectorAll('[data-p]').forEach(b => b.addEventListener('click', () => { this.page += +b.dataset.p; this.draw(); this.wrap.scrollTop = 0; }));
+  }
+  setRows(rows) { this.rows = rows; this.apply(); this.page = 0; this.draw(); }
+  apply() {
+    const c = this.cols.find(c => c.key === this.sort.key); const k = c.sortKey || c.key; const d = this.sort.dir;
+    this.rows.sort((a, b) => { const x = a[k], y = b[k]; return d * (typeof x === 'number' && typeof y === 'number' ? x - y : COLL.compare(String(x ?? ''), String(y ?? ''))); });
+  }
+  draw() {
+    this.thr.querySelectorAll('th').forEach((th, i) => th.querySelector('.ar').textContent = this.cols[i].key === this.sort.key ? (this.sort.dir > 0 ? '▲' : '▼') : '');
+    const n = this.rows.length, pages = Math.max(1, Math.ceil(n / this.size)); this.page = Math.min(Math.max(0, this.page), pages - 1);
+    const a = this.page * this.size, b = Math.min(n, a + this.size);
+    this.tb.innerHTML = n ? this.rows.slice(a, b).map(r => '<tr>' + this.cols.map(c => `<td class="${c.num ? 'num' : ''} ${c.muted ? 'muted' : ''}">${c.html ? c.html(r) : esc(c.fmt ? c.fmt(r[c.key], r) : r[c.key])}</td>`).join('') + '</tr>').join('')
+      : `<tr><td colspan="${this.cols.length}"><div class="empty">Nenhum registro para os filtros selecionados.</div></td></tr>`;
+    this.info.textContent = n ? `Mostrando ${nf.format(a + 1)}–${nf.format(b)} de ${nf.format(n)} linhas` : '0 linhas';
+    this.pg.textContent = `${this.page + 1} / ${pages}`;
+    const [prev, next] = this.wrap.parentElement.querySelectorAll('[data-p]'); prev.disabled = this.page === 0; next.disabled = this.page >= pages - 1;
+  }
+}
+
+/* ---------- Chart.js: padrões do tema ---------- */
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+Chart.defaults.color = css('--muted');
+Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+Chart.defaults.font.size = 12;
+Chart.defaults.borderColor = '#47474B';
+Chart.defaults.animation = false;
+const SERIES = ['--s1', '--s2', '--s3', '--s4', '--s5', '--s6', '--s7', '--s8'].map(css);
+const PRIMARY = css('--primary'), CARD = css('--card'), INK2 = css('--ink-2');
+const tooltipBase = { backgroundColor: '#242425', borderColor: css('--line'), borderWidth: 1, titleColor: css('--ink'), bodyColor: INK2, padding: 10, cornerRadius: 8, displayColors: true, boxPadding: 4 };
+const truncate = (s, n) => s.length > n ? s.slice(0, n - 1) + '…' : s;
+// Barra horizontal: altura proporcional ao número de itens (o painel rola).
+function hBar(canvas, { fmtAxis, tooltip }) {
+  return new Chart(canvas, { type: 'bar', data: { labels: [], datasets: [{ data: [], backgroundColor: PRIMARY, borderRadius: { topRight: 4, bottomRight: 4 }, borderSkipped: 'start', barPercentage: .78, categoryPercentage: .9 }] },
+    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      scales: { x: { position: 'top', grid: { color: '#424246' }, ticks: { callback: fmtAxis } }, y: { grid: { display: false }, ticks: { color: INK2, autoSkip: false, callback(i) { return truncate(this.getLabelForValue(i), 34); } } } },
+      plugins: { legend: { display: false }, tooltip: { ...tooltipBase, displayColors: false, callbacks: tooltip } } } });
+}
+function fillBar(chart, box, labels, values) {
+  box.style.height = Math.max(160, labels.length * 24 + 60) + 'px';
+  chart.data.labels = labels; chart.data.datasets[0].data = values; chart.resize(); chart.update();
+}
+
+/* ---------- visões (abas): filtros independentes, render só quando visível ---------- */
+const VIEWS = {};
+function makeView(id, cfg) {
+  const root = document.getElementById('view-' + id);
+  const v = { id, root, cfg, from: cfg.defaultFrom, to: MAX_DAY, ms: {}, cache: null };
+  const fhost = root.querySelector('[data-filters]');
+  const pd = document.createElement('div'); pd.className = 'f-period';
+  const minAttr = MIN_DAY ? `min="${MIN_DAY}"` : '';
+  pd.innerHTML = `<span class="f-label">Período</span><div class="period"><input type="date" class="date" ${minAttr} max="${MAX_DAY}" value="${v.from}" aria-label="Data início"><span>até</span><input type="date" class="date" ${minAttr} max="${MAX_DAY}" value="${v.to}" aria-label="Data fim"></div>`;
+  const [fi, ti] = pd.querySelectorAll('input');
+  const onDate = () => {
+    let f = fi.value || v.from, t = ti.value || MAX_DAY; if (f > t) { [f, t] = [t, f]; fi.value = f; ti.value = t; }
+    v.from = f; v.to = t; v.cache = null; Object.values(v.ms).forEach(m => m.refresh()); update(v);
+    ensure(f, t).then(changed => changed && refreshAll());
+  };
+  fi.addEventListener('change', onDate); ti.addEventListener('change', onDate);
+  const metricFor = dim => {
+    if (!v.cache) v.cache = {};
+    if (!v.cache[dim]) { const m = new Map(), key = DIMS[dim].key; for (const r of S) if (r.day >= v.from && r.day <= v.to) { const k = key(r); m.set(k, (m.get(k) || 0) + METRIC.of(r)); } v.cache[dim] = m; }
+    return v.cache[dim];
+  };
+  cfg.filters.forEach(f => { v.ms[f.dim] = new MultiSelect(fhost, { label: f.label || DIMS[f.dim].label, dim: f.dim, showMetric: f.metric, getMetric: metricFor, onChange: () => update(v) }); });
+  if (cfg.periodAt != null) fhost.insertBefore(pd, fhost.children[cfg.periodAt] || null); else fhost.insertBefore(pd, fhost.firstChild);
+  v.filtered = () => {
+    const act = Object.entries(v.ms).filter(([, m]) => m.sel.size).map(([d, m]) => [DIMS[d].key, m.sel]);
+    return S.filter(r => r.day >= v.from && r.day <= v.to && act.every(([key, set]) => set.has(key(r))));
+  };
+  v.kpi = root.querySelector('[data-kpi]');
+  cfg.init && cfg.init(v);
+  VIEWS[id] = v;
+  return v;
+}
+function kpiHtml(label, value, metas) {
+  return `<div><div class="lbl">${esc(label)}</div><div class="val">${esc(value)}</div></div><div class="meta">${metas.map(([b, t]) => `<span><b>${esc(b)}</b> ${esc(t)}</span>`).join('')}</div>`;
+}
+function update(v) {
+  if (!v.root.classList.contains('active')) { v.dirty = true; return; } // Chart.js precisa de caixa visível
+  v.dirty = false; const rows = v.filtered(); v.kpi.innerHTML = v.cfg.kpi(rows); v.cfg.render(v, rows);
+}
+function refreshAll() { stamp(); Object.values(VIEWS).forEach(v => { v.cache = null; Object.values(v.ms).forEach(m => m.refresh()); update(v); }); }
+const monthStart = MAX_DAY.slice(0, 8) + '01';
+
+/* ================================================================
+   6. VISÕES — ESPECÍFICO DO DASHBOARD
+   Rótulos em português e legíveis; exportData devolve as mesmas linhas da tela.
+   ================================================================ */
+makeView('geral', {
+  defaultFrom: monthStart,
+  filters: [{ dim: 'cat', metric: true }],
+  kpi: rows => kpiHtml(METRIC.label, METRIC.fmt(rows.reduce((a, r) => a + METRIC.of(r), 0)), [
+    [nf.format(rows.length), 'registros'], [nf.format(new Set(rows.map(r => r.day)).size), 'dias'],
+  ]),
+  init(v) {
+    v.table = new Table(v.root.querySelector('[data-table]'), [
+      { key: 'day', label: 'Data', html: r => dayCell(r.day, shortDate(r.day)) },
+      { key: 'cat', label: 'Categoria' },
+      { key: 'value', label: METRIC.label, num: true, fmt: METRIC.fmt },
+    ], { key: 'day', dir: -1 });
+    v.bar = hBar(v.root.querySelector('[data-bar]'), { fmtAxis: x => nf.format(x), tooltip: { label: it => ' ' + METRIC.label + ': ' + METRIC.fmt(it.raw) } });
+  },
+  render(v, rows) {
+    v.table.setRows(rows.slice());
+    v.root.querySelector('[data-count]').textContent = nf.format(rows.length) + ' registros';
+    const m = new Map(); for (const r of rows) m.set(r.cat, (m.get(r.cat) || 0) + r.value);
+    v.byCat = [...m].map(([cat, value]) => ({ cat, value })).sort((a, b) => b.value - a.value);
+    fillBar(v.bar, v.root.querySelector('[data-barbox]'), v.byCat.map(r => r.cat), v.byCat.map(r => +r.value.toFixed(2)));
+    v.root.querySelector('[data-barsub]').textContent = nf.format(v.byCat.length) + ' categorias';
+  },
+  exportData(v) {
+    return [
+      { name: 'Registros', cols: ['Data', 'Dia da semana', 'Categoria', METRIC.label], rows: v.table.rows.map(r => [shortDate(r.day), wdLabel(r.day), r.cat, r.value]) },
+      { name: 'Por categoria', cols: ['Categoria', METRIC.label], rows: v.byCat.map(r => [r.cat, r.value]) },
+    ];
+  },
+});
+
+/* ================================================================
+   7. ABAS, ATUALIZAR, EXPORTAÇÃO (não muda entre dashboards)
+   ================================================================ */
+let current = Object.keys(VIEWS)[0];
+function show(id) {
+  current = id;
+  document.querySelectorAll('.tab').forEach(t => { const on = t.dataset.view === id; t.classList.toggle('active', on); t.setAttribute('aria-selected', on); });
+  Object.values(VIEWS).forEach(v => v.root.classList.toggle('active', v.id === id));
+  const v = VIEWS[id]; if (v.dirty !== false) update(v);
+  try { localStorage.setItem(TAB_KEY, id); } catch (e) {}
+}
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => show(t.dataset.view)));
+let saved = null; try { saved = localStorage.getItem(TAB_KEY); } catch (e) {}
+show(VIEWS[saved] ? saved : current);
+ensure(monthStart, MAX_DAY).then(changed => changed && refreshAll());
+
+const reloadBtn = document.getElementById('reload');
+if (!SRC.incremental) reloadBtn.hidden = true; // dev/snapshot: os dados estão no próprio arquivo
+reloadBtn.addEventListener('click', () => {
+  const from = loadedFrom || monthStart;
+  MAX_DAY = today();
+  chain = chain.then(() => { RAW.clear(); Object.values(LOOKUPS).forEach(m => m.clear()); loadedFrom = loadedTo = null; });
+  ensure(from, MAX_DAY).then(changed => changed && refreshAll());
+});
+
+const toast = msg => { const t = document.getElementById('toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(toast.h); toast.h = setTimeout(() => t.style.display = 'none', 2600); };
+const fileBase = () => { const v = VIEWS[current]; const name = document.querySelector(`.tab[data-view="${current}"]`).textContent.trim(); return (DASHBOARD_NAME + ' - ' + name + ' - ' + v.from + ' a ' + v.to).replace(/[\\/:*?"<>|]/g, '-'); };
+const download = (blob, name) => { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); };
+document.getElementById('exp-csv').addEventListener('click', () => {
+  const sheets = VIEWS[current].cfg.exportData(VIEWS[current]);
+  // CSV para Excel pt-BR: separador ';', vírgula decimal, BOM UTF-8
+  const cell = x => { if (x === null || x === undefined) return ''; if (typeof x === 'number') return String(x).replace('.', ','); const s = String(x); return /[";\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  const out = sheets.length === 1 ? [sheets[0].cols, ...sheets[0].rows].map(r => r.map(cell).join(';')).join('\r\n')
+    : sheets.map(sh => [[sh.name], sh.cols, ...sh.rows].map(r => r.map(cell).join(';')).join('\r\n')).join('\r\n\r\n');
+  download(new Blob(['﻿' + out], { type: 'text/csv;charset=utf-8' }), fileBase() + '.csv');
+  toast('CSV exportado');
+});
+document.getElementById('exp-xlsx').addEventListener('click', () => {
+  try {
+    const sheets = VIEWS[current].cfg.exportData(VIEWS[current]);
+    const wb = XLSX.utils.book_new();
+    sheets.forEach(sh => {
+      const ws = XLSX.utils.aoa_to_sheet([sh.cols, ...sh.rows]);
+      ws['!cols'] = sh.cols.map((c, i) => ({ wch: Math.min(60, Math.max(c.length, ...sh.rows.slice(0, 300).map(r => String(r[i] ?? '').length)) + 2) }));
+      XLSX.utils.book_append_sheet(wb, ws, sh.name.slice(0, 31));
+    });
+    XLSX.writeFile(wb, fileBase() + '.xlsx');
+    toast('Planilha exportada');
+  } catch (e) { toast('Não foi possível gerar a planilha: ' + e.message); }
+});
+})();
+</script>
+</body>
+</html>

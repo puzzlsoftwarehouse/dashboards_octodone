@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "{{slug}}-dev",
+      "runtimeExecutable": "powershell.exe",
+      "runtimeArgs": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "{{PASTA_DO_PROJETO}}/.claude/serve.ps1", "-File", "{{slug}}.html"],
+      "port": 8766
+    },
+    {
+      "name": "{{slug}}-live-mock",
+      "runtimeExecutable": "powershell.exe",
+      "runtimeArgs": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "{{PASTA_DO_PROJETO}}/.claude/mock-gateway.ps1", "-File", "{{slug}}.html"],
+      "port": 8767
+    }
+  ]
+}
